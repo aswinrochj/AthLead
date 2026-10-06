@@ -144,7 +144,7 @@ const Events = () => {
 
   useEffect(() => {
     let isCancelled = false;
-    const fetchEvents = async () => {
+    const getEvents = async () => {
       setIsLoading(true);
       setIsError(false);
       try {
@@ -177,7 +177,7 @@ const Events = () => {
         setIsLoading(false);
       }
     };
-    fetchEvents();
+    getEvents();
     return () => {
       isCancelled = true;
     };
