@@ -67,7 +67,7 @@ def health_check():
 
 @app.post("/rank")
 def rank_athlete(athlete: Athlete):
-    if not (model and scaler and label_encoders):
+    if model is None or scaler is None or label_encoders is None:
         raise HTTPException(
             status_code=503, detail="Model artifacts not available"
         )
