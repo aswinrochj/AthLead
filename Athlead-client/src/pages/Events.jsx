@@ -43,7 +43,6 @@ const Events = () => {
     totalPages: 1,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
 
   // Extract filter state from searchParams
   const sport = searchParams.get("sport") || "All";
@@ -53,19 +52,6 @@ const Events = () => {
   const status = searchParams.get("status") || "All";
   const search = searchParams.get("search") || "";
   const page = parseInt(searchParams.get("page") || "1", 10);
-
-  // Local state for debounced inputs
-  const [searchInput, setSearchInput] = useState(search);
-  const [locationInput, setLocationInput] = useState(location);
-
-  // Sync local inputs when URL searchParams change
-  useEffect(() => {
-    setSearchInput(search);
-  }, [search]);
-
-  useEffect(() => {
-    setLocationInput(location);
-  }, [location]);
 
   const updateFilters = React.useCallback(
     (newFilters) => {
@@ -93,7 +79,6 @@ const Events = () => {
     let isCancelled = false;
     const getEvents = async () => {
       setIsLoading(true);
-      setIsError(false);
       try {
         const params = {};
         if (sport && sport !== "All") params.sport = sport;
@@ -119,7 +104,6 @@ const Events = () => {
       } catch (error) {
         if (isCancelled) return;
         console.log(error);
-        setIsError(true);
         setEvents([]);
         setIsLoading(false);
       }
