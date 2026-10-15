@@ -52,6 +52,8 @@ const Events = () => {
   const status = searchParams.get("status") || "All";
   const search = searchParams.get("search") || "";
   const page = parseInt(searchParams.get("page") || "1", 10);
+  const [searchInput, setSearchInput] = useState(search);
+  const [locationInput, setLocationInput] = useState(location);
 
   const updateFilters = React.useCallback(
     (newFilters) => {
