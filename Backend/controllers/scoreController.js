@@ -145,11 +145,8 @@ export const getRanking = async (req, res) => {
     let query = Score.find({})
       .sort({ score: -1, _id: 1 })
       .select("user score")
-      .populate("user", "fullname image state gender");
-
-    if (query && typeof query.lean === "function") {
-      query = query.lean();
-    }
+      .populate("user", "fullname image state gender")
+      .lean();
 
     if (isPaginated) {
       const pageNum = Math.max(1, parseInt(page, 10) || 1);
@@ -157,34 +154,12 @@ export const getRanking = async (req, res) => {
       const skip = (pageNum - 1) * limitNum;
 
       const [rankDocs, total] = await Promise.all([
-        query.skip(skip).limit(limitNum).exec
-          ? query.skip(skip).limit(limitNum).exec()
-          : query.skip(skip).limit(limitNum),
-        Score.countDocuments ? Score.countDocuments({}) : Promise.resolve(0),
+        query.skip(skip).limit(limitNum).exec(),
+        Score.countDocuments({}),
       ]);
 
-      const userIds = (rankDocs || []).map((r) => r.user?._id).filter(Boolean);
-      let scoreInputs = [];
-      if (userIds.length > 0 && AthleteScoreInput && AthleteScoreInput.find) {
-        try {
-          scoreInputs = await AthleteScoreInput.find({
-            user: { $in: userIds },
-          });
-        } catch (e) {
-          scoreInputs = [];
-        }
-      }
-      const sportMap = {};
-      (scoreInputs || []).forEach((si) => {
-        if (si.user) sportMap[si.user.toString()] = si.sport;
-      });
-
-      const rank = (rankDocs || []).map((doc, idx) => ({
+      const rank = rankDocs.map((doc, idx) => ({
         ...doc,
-        sport:
-          doc.sport ||
-          (doc.user ? sportMap[doc.user._id.toString()] : null) ||
-          "General",
         rank: skip + idx + 1,
       }));
 
@@ -203,35 +178,15 @@ export const getRanking = async (req, res) => {
       });
     }
 
-    const rankDocs = query.exec ? await query.exec() : await query;
-    const userIds = (rankDocs || []).map((r) => r.user?._id).filter(Boolean);
-    let scoreInputs = [];
-    if (userIds.length > 0 && AthleteScoreInput && AthleteScoreInput.find) {
-      try {
-        scoreInputs = await AthleteScoreInput.find({
-          user: { $in: userIds },
-        });
-      } catch (e) {
-        scoreInputs = [];
-      }
-    }
-    const sportMap = {};
-    (scoreInputs || []).forEach((si) => {
-      if (si.user) sportMap[si.user.toString()] = si.sport;
-    });
-
-    const rank = (rankDocs || []).map((doc, idx) => ({
+    const rankDocs = await query.exec();
+    const rank = rankDocs.map((doc, idx) => ({
       ...doc,
-      sport:
-        doc.sport ||
-        (doc.user ? sportMap[doc.user._id.toString()] : null) ||
-        "General",
       rank: idx + 1,
     }));
 
     return res.status(200).json({
       success: true,
-      rank,
+      rank: rankWithSport,
     });
   } catch (error) {
     return res.status(500).json({
